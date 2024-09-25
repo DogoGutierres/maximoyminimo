@@ -1,11 +1,20 @@
 package ar.edu.tecnica29de6;
 
+import com.opencsv.CSVWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicHeader;
+
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvException;
@@ -42,6 +51,7 @@ public class Main {
 				// Realizar la solicitud HTTP
 				CloseableHttpClient httpClient = HttpClients.createDefault();
 				HttpGet request = new HttpGet(url);
+				request.setHeader(new BasicHeader("Accept-Language", "en-US"));
 				HttpResponse response = httpClient.execute(request);
 				ObjectMapper mapper = new ObjectMapper();
 
@@ -111,22 +121,27 @@ public class Main {
 		}
 	}
 
+
 	// Actualizar el archivo CSV con el nuevo precio
 	private static void updateCSV(double price, String timestamp) throws IOException {
-		String fileName = "btc_prices.csv";
-		File file = new File(fileName);
+	    String fileName = "btc_prices.csv";
+	    File file = new File(fileName);
 
-		// Si el archivo no existe, crear y escribir el encabezado
-		if (!file.exists()) {
-			try (CSVWriter writer = new CSVWriter(new FileWriter(fileName))) {
-				writer.writeNext(new String[] { "timestamp", "price" });
-			}
-		}
+	    // Si el archivo no existe, crear y escribir el encabezado
+	    if (!file.exists()) {
+	        try (CSVWriter writer = new CSVWriter(new FileWriter(fileName))) {
+	            writer.writeNext(new String[]{"timestamp", "price"});
+	        }
+	    }
 
-		// Escribir la nueva fila con el timestamp y el precio
-		try (CSVWriter writer = new CSVWriter(new FileWriter(fileName, true))) {
-			DecimalFormat df = new DecimalFormat("0.0000");
-			writer.writeNext(new String[] { timestamp, df.format(price) });
-		}
+	    // Crear un DecimalFormat con símbolos específicos para el formato en inglés (punto como separador decimal)
+	    DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
+	    DecimalFormat df = new DecimalFormat("0.0000", symbols);
+
+	    // Escribir la nueva fila con el timestamp y el precio formateado
+	    try (CSVWriter writer = new CSVWriter(new FileWriter(fileName, true))) {
+	        writer.writeNext(new String[]{timestamp, df.format(price)});
+	    }
 	}
+
 }
